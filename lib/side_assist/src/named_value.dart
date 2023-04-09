@@ -73,7 +73,7 @@ class ValueType {
     return null;
   }
 
-  static ValueType fromString(String str) {
+  factory ValueType.fromString(String str) {
     if (str == "Null") return nullType;
     if (str == "Bool") return boolType;
     if (str == "Integer") return integerType;
@@ -81,6 +81,17 @@ class ValueType {
     if (str == "String") return stringType;
     if (str == "Array") return listType;
     if (str == "Object") return stringMapType;
+    return unknownType;
+  }
+
+  factory ValueType.fromType(Type type) {
+    if (type == Null) return nullType;
+    if (type == bool) return boolType;
+    if (type == int) return integerType;
+    if (type == double) return doubleType;
+    if (type == String) return stringType;
+    if (type == List) return listType;
+    if (type == Object) return stringMapType;
     return unknownType;
   }
 
@@ -110,13 +121,18 @@ class NamedValue {
         _value = ManualValueNotifier(value),
         _meta = meta;
 
+  NamedValue.fromLocalValue(this.name, dynamic value, {this.tryChangeValue})
+      : _value = ManualValueNotifier(value),
+        _type = ValueType.fromType(value.runtimeType);
+
   ValueType get type => _type;
   ValueMetaType? get meta => _meta;
 
   dynamic get value => _value.value;
   ManualValueNotifier<dynamic> get valueNotifer => _value;
 
-  bool get isEditable => _type != ValueType.nullType;
+  bool get isValueChangable => tryChangeValue != null;
+  bool get isValueChangeEnabled => _type != ValueType.nullType;
 
   void originSetValue(dynamic v) {
     if (_value.value == v) return;

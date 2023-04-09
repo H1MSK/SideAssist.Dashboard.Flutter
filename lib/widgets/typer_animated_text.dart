@@ -6,7 +6,7 @@ class TyperAnimatedText extends StatefulWidget {
   final Duration? duration;
   final AnimationController? controller;
   final Curve curve;
-  TyperAnimatedText(this.text,
+  const TyperAnimatedText(this.text,
       {this.reverse = false,
       this.duration,
       this.curve = Curves.linear,
@@ -42,7 +42,6 @@ class _TyperAnimatedTextState extends State<TyperAnimatedText>
 
   @override
   void didChangeDependencies() {
-    // TODO: implement didChangeDependencies
     super.didChangeDependencies();
     _localController?.duration =
         widget.duration ?? FluentTheme.of(context).mediumAnimationDuration;
@@ -50,7 +49,6 @@ class _TyperAnimatedTextState extends State<TyperAnimatedText>
 
   @override
   void didUpdateWidget(covariant TyperAnimatedText oldWidget) {
-    // TODO: implement didUpdateWidget
     super.didUpdateWidget(oldWidget);
     _checkAnimation();
   }

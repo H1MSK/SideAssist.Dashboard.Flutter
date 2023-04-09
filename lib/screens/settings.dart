@@ -1,12 +1,15 @@
 // ignore_for_file: constant_identifier_names
 
+import 'package:dashboard/config.dart';
+import 'package:dashboard/manual_value_notifer.dart';
+import 'package:dashboard/side_assist/side_assist.dart';
+import 'package:dashboard/widgets/option.dart';
+import 'package:dashboard/widgets/option_list.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
-import 'package:provider/provider.dart';
 
-import '../theme.dart';
 import '../widgets/page.dart';
 
 const List<String> accentColorNames = [
@@ -77,7 +80,7 @@ List<WindowEffect> get currentWindowEffects {
   return [];
 }
 
-class Settings extends ScrollablePage {
+class Settings extends ScrollablePage with OptionWidgetMixin, PageMixin {
   Settings({super.key});
 
   @override
@@ -88,203 +91,20 @@ class Settings extends ScrollablePage {
   @override
   List<Widget> buildScrollable(BuildContext context) {
     assert(debugCheckHasMediaQuery(context));
-    final appTheme = context.watch<AppTheme>();
-    const spacer = SizedBox(height: 10.0);
-    const biggerSpacer = SizedBox(height: 40.0);
-
-    const supportedLocales = FluentLocalizations.supportedLocales;
-    final currentLocale =
-        appTheme.locale ?? Localizations.maybeLocaleOf(context);
+    var globalConfigMap = ManualValueNotifier(<NamedValue>[]);
+    globalConfigMap.value
+        .addAll(GlobalConfig.keys.map((e) => NamedValue.fromLocalValue(
+              e,
+              GlobalConfig.get(e),
+              tryChangeValue: (value) {
+                GlobalConfig.set(e, value);
+              },
+            )));
 
     return [
-      Text('Theme mode', style: FluentTheme.of(context).typography.subtitle),
+      Text('Server', style: FluentTheme.of(context).typography.subtitle),
       spacer,
-      ...List.generate(ThemeMode.values.length, (index) {
-        final mode = ThemeMode.values[index];
-        return Padding(
-          padding: const EdgeInsetsDirectional.only(bottom: 8.0),
-          child: RadioButton(
-            checked: appTheme.mode == mode,
-            onChanged: (value) {
-              if (value) {
-                appTheme.mode = mode;
-
-                if (kIsWindowEffectsSupported) {
-                  // some window effects require on [dark] to look good.
-                  // appTheme.setEffect(WindowEffect.disabled, context);
-                  appTheme.setEffect(appTheme.windowEffect, context);
-                }
-              }
-            },
-            content: Text('$mode'.replaceAll('ThemeMode.', '')),
-          ),
-        );
-      }),
-      biggerSpacer,
-      Text(
-        'Navigation Pane Display Mode',
-        style: FluentTheme.of(context).typography.subtitle,
-      ),
-      spacer,
-      ...List.generate(PaneDisplayMode.values.length, (index) {
-        final mode = PaneDisplayMode.values[index];
-        return Padding(
-          padding: const EdgeInsetsDirectional.only(bottom: 8.0),
-          child: RadioButton(
-            checked: appTheme.displayMode == mode,
-            onChanged: (value) {
-              if (value) appTheme.displayMode = mode;
-            },
-            content: Text(
-              mode.toString().replaceAll('PaneDisplayMode.', ''),
-            ),
-          ),
-        );
-      }),
-      biggerSpacer,
-      Text('Navigation Indicator',
-          style: FluentTheme.of(context).typography.subtitle),
-      spacer,
-      ...List.generate(NavigationIndicators.values.length, (index) {
-        final mode = NavigationIndicators.values[index];
-        return Padding(
-          padding: const EdgeInsetsDirectional.only(bottom: 8.0),
-          child: RadioButton(
-            checked: appTheme.indicator == mode,
-            onChanged: (value) {
-              if (value) appTheme.indicator = mode;
-            },
-            content: Text(
-              mode.toString().replaceAll('NavigationIndicators.', ''),
-            ),
-          ),
-        );
-      }),
-      biggerSpacer,
-      Text('Accent Color', style: FluentTheme.of(context).typography.subtitle),
-      spacer,
-      Wrap(children: [
-        Tooltip(
-          child: _buildColorBlock(appTheme, systemAccentColor),
-          message: accentColorNames[0],
-        ),
-        ...List.generate(Colors.accentColors.length, (index) {
-          final color = Colors.accentColors[index];
-          return Tooltip(
-            message: accentColorNames[index + 1],
-            child: _buildColorBlock(appTheme, color),
-          );
-        }),
-      ]),
-      if (kIsWindowEffectsSupported) ...[
-        biggerSpacer,
-        Text(
-          'Window Transparency (${defaultTargetPlatform.toString().replaceAll('TargetPlatform.', '')})',
-          style: FluentTheme.of(context).typography.subtitle,
-        ),
-        spacer,
-        ...List.generate(currentWindowEffects.length, (index) {
-          final mode = currentWindowEffects[index];
-          return Padding(
-            padding: const EdgeInsetsDirectional.only(bottom: 8.0),
-            child: RadioButton(
-              checked: appTheme.windowEffect == mode,
-              onChanged: (value) {
-                if (value) {
-                  appTheme.windowEffect = mode;
-                  appTheme.setEffect(mode, context);
-                }
-              },
-              content: Text(
-                mode.toString().replaceAll('WindowEffect.', ''),
-              ),
-            ),
-          );
-        }),
-      ],
-      biggerSpacer,
-      Text('Text Direction',
-          style: FluentTheme.of(context).typography.subtitle),
-      spacer,
-      ...List.generate(TextDirection.values.length, (index) {
-        final direction = TextDirection.values[index];
-        return Padding(
-          padding: const EdgeInsetsDirectional.only(bottom: 8.0),
-          child: RadioButton(
-            checked: appTheme.textDirection == direction,
-            onChanged: (value) {
-              if (value) {
-                appTheme.textDirection = direction;
-              }
-            },
-            content: Text(
-              '$direction'
-                  .replaceAll('TextDirection.', '')
-                  .replaceAll('rtl', 'Right to left')
-                  .replaceAll('ltr', 'Left to right'),
-            ),
-          ),
-        );
-      }).reversed,
-      Text('Locale', style: FluentTheme.of(context).typography.subtitle),
-      spacer,
-      Wrap(
-        spacing: 15.0,
-        runSpacing: 10.0,
-        children: List.generate(
-          supportedLocales.length,
-          (index) {
-            final locale = supportedLocales[index];
-
-            return Padding(
-              padding: const EdgeInsetsDirectional.only(bottom: 8.0),
-              child: RadioButton(
-                checked: currentLocale == locale,
-                onChanged: (value) {
-                  if (value) {
-                    appTheme.locale = locale;
-                  }
-                },
-                content: Text('$locale'),
-              ),
-            );
-          },
-        ),
-      ),
+      ClientOptionsWidget(globalConfigMap)
     ];
-  }
-
-  Widget _buildColorBlock(AppTheme appTheme, AccentColor color) {
-    return Padding(
-      padding: const EdgeInsets.all(2.0),
-      child: Button(
-        onPressed: () {
-          appTheme.color = color;
-        },
-        style: ButtonStyle(
-          padding: ButtonState.all(EdgeInsets.zero),
-          backgroundColor: ButtonState.resolveWith((states) {
-            if (states.isPressing) {
-              return color.light;
-            } else if (states.isHovering) {
-              return color.lighter;
-            }
-            return color;
-          }),
-        ),
-        child: Container(
-          height: 40,
-          width: 40,
-          alignment: AlignmentDirectional.center,
-          child: appTheme.color == color
-              ? Icon(
-                  FluentIcons.check_mark,
-                  color: color.basedOnLuminance(),
-                  size: 22.0,
-                )
-              : null,
-        ),
-      ),
-    );
   }
 }

@@ -11,11 +11,11 @@ import 'package:mqtt_client/mqtt_server_client.dart';
 class Dashboard {
   static const String clientIdentifier = "dashboard";
 
-  static String get server => prefs.getString("server.host") as String;
-  static set server(String value) => prefs.setString("server.host", value);
+  static String get server => GlobalConfig.get("server.host") as String;
+  static set server(String value) => GlobalConfig.set("server.host", value);
 
-  static int get port => prefs.getInt("server.port") as int;
-  static set port(int value) => prefs.setInt("server.port", value);
+  static int get port => GlobalConfig.get("server.port") as int;
+  static set port(int value) => GlobalConfig.set("server.port", value);
 
   // ...a.b.x < ...a.y
   //            ...a.y < ...b.z
@@ -130,7 +130,7 @@ class Dashboard {
 
     if (type == "param") {
       if (isValidator) {
-        var validator = client.originUpdateParamValidator(name, obj);
+        client.originUpdateParamValidator(name, obj);
         print("Updated validator for param $name of client $fullClientName");
       } else {
         client.originUpdateParam(name, obj);
@@ -149,7 +149,7 @@ class Dashboard {
 
   void changeOption(Client client, String optionName, dynamic value) {
     mqttClient.publishMessage(
-        "side_assist/${client.name}/option/${optionName}/set",
+        "side_assist/${client.name}/option/$optionName/set",
         MqttQos.atLeastOnce,
         MqttClientPayloadBuilder()
             .addString(

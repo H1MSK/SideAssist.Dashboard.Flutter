@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:dashboard/config.dart';
+import 'package:dashboard/screens/settings.dart';
 import 'package:fluent_ui/fluent_ui.dart' hide Page;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart' as flutter_acrylic;
+import 'package:flutter_acrylic/window_effect.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:provider/provider.dart';
@@ -27,10 +29,19 @@ bool get isDesktop {
 }
 
 void main() async {
-  await initConfig();
+  await GlobalConfig.init({
+    "server.host": "localhost",
+    "server.port": 1883,
+    "server.username": "side_assist_dashboard",
+    "server.password": "16509490",
+    "theme.mode": ThemeMode.system.name,
+    "theme.windowEffects":
+        (Platform.isWindows ? WindowEffect.acrylic : WindowEffect.disabled).name
+  });
   dashboard.initialize();
   Pages.initialize();
-  var future = dashboard.connect('side_assist_dashboard', '16509490');
+  var future = dashboard.connect(
+      GlobalConfig.get("server.username"), GlobalConfig.get("server.password"));
 
   WidgetsFlutterBinding.ensureInitialized();
 

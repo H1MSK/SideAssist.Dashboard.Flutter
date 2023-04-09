@@ -4,9 +4,8 @@ import 'package:dashboard/side_assist/side_assist.dart';
 import 'package:dashboard/widgets/edit.dart';
 import 'package:dashboard/widgets/typer_animated_text.dart';
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/services.dart';
 
-class ClientOptionWidgetMixin {
+class OptionWidgetMixin {
   Widget Function(BuildContext, bool) getHeaderBuilder(NamedValue option) {
     return (BuildContext context, bool isOpen) => Flexible(
             child: Row(
@@ -36,6 +35,8 @@ class _LastHalfLinear extends Curve {
 class _ClientOptionWidgetState extends State<ClientOptionWidget>
     with EditWidgetMixin {
   bool expanded = false;
+  late final bool valueChangable;
+  late final bool valueChangeEnabled;
   bool editing = false;
   late final List<CommandBarButton> viewCommands;
   late final List<CommandBarButton> editCommands;
@@ -49,11 +50,16 @@ class _ClientOptionWidgetState extends State<ClientOptionWidget>
       setState(() {});
     });
 
+    valueChangable = widget.option.isValueChangable;
+    valueChangeEnabled = widget.option.isValueChangeEnabled;
+
     viewCommands = [
-      if (widget.option.isEditable)
+      if (widget.option.isValueChangable)
         CommandBarButton(
-          icon: const Icon(FluentIcons.edit),
-          label: const Text("edit"),
+          icon: valueChangeEnabled
+              ? const Icon(FluentIcons.edit)
+              : const Icon(FluentIcons.blocked),
+          label: Text(valueChangeEnabled ? "edit" : "uneditable"),
           onPressed: () => setState(() {
             editing = true;
           }),

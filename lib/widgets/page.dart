@@ -1,10 +1,14 @@
 import 'dart:async';
 
-import 'package:dashboard/widgets/deferred_widget.dart';
-
 import 'package:fluent_ui/fluent_ui.dart';
 
 mixin PageMixin {
+  static const _spacer = SizedBox(height: 10.0);
+  static const _biggerSpacer = SizedBox(height: 40.0);
+
+  SizedBox get spacer => _spacer;
+  SizedBox get biggerSpacer => _biggerSpacer;
+
   Widget description({required Widget content}) {
     return Builder(builder: (context) {
       return Padding(
@@ -106,24 +110,6 @@ class EmptyPage extends Page {
   @override
   Widget build(BuildContext context) {
     return child ?? const SizedBox.shrink();
-  }
-}
-
-typedef DeferredPageBuilder = Page Function();
-
-class DeferredPage extends Page {
-  final LibraryLoader libraryLoader;
-  final DeferredPageBuilder createPage;
-
-  DeferredPage({
-    super.key,
-    required this.libraryLoader,
-    required this.createPage,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DeferredWidget(libraryLoader, () => createPage().build(context));
   }
 }
 
