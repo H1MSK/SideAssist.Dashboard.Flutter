@@ -199,7 +199,36 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
     super.dispose();
   }
 
-  int topIndex = 0;
+  int _calculateSelectedIndex(BuildContext context) {
+    final location = Pages.router.location;
+    int currentIndex = 0;
+
+    bool walkThrough(Iterable<NavigationPaneItem> list) {
+      for (var item in list) {
+        if (item.key == Key(location)) return true;
+        currentIndex += 1;
+        if (item is PaneItemExpander &&
+            (item.expanderKey.currentContext != null
+                ? (PageStorage.of(item.expanderKey.currentContext!).readState(
+                      context,
+                      identifier:
+                          'paneItemExpanderOpen${item.expanderKey.currentState?.index ?? -1}',
+                    ) as bool? ??
+                    false)
+                : false) &&
+            walkThrough(item.items)) return true;
+      }
+      return false;
+    }
+
+    if (walkThrough(Pages.originalItems)) return currentIndex;
+
+    if (walkThrough(Pages.generatedPaneItems)) return currentIndex;
+
+    if (walkThrough(Pages.footerItems)) return currentIndex;
+
+    return 0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -289,8 +318,7 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
                 );
               },
               pane: NavigationPane(
-                onChanged: (value) => topIndex = value,
-                selected: topIndex,
+                selected: _calculateSelectedIndex(context),
                 displayMode: appTheme.displayMode,
                 indicator: () {
                   switch (appTheme.indicator) {
