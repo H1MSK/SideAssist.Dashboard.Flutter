@@ -1,55 +1,94 @@
+import 'dart:collection';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:dashboard/manual_value_notifer.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dashboard/side_assist/side_assist.dart';
+import 'package:path_provider/path_provider.dart';
 
 class GlobalConfig {
-  static late final ManualValueNotifier<SharedPreferences> _prefs;
+  static final indexedConfig = <String, NamedValue>{};
+  static final sortedConfigNotifier =
+      ManualValueNotifier(SplayTreeSet<NamedValue>(NamedValue.nameComparator));
+
+  static SplayTreeSet<NamedValue> get sortedConfig =>
+      sortedConfigNotifier.value;
 
   static dynamic get(String name) {
-    return _prefs.value.get(name);
+    return indexedConfig[name]?.value;
   }
 
-  static Set<String> get keys => _prefs.value.getKeys();
+  static bool savingInProcess = false;
+
+  static Future<void> _saveToFile() async {
+    if (savingInProcess) return;
+    savingInProcess = true;
+    var data = jsonEncode(
+        indexedConfig.map((key, value) => MapEntry(key, value.value)));
+    var dir = await getApplicationDocumentsDirectory();
+    File(dir.path + '/config.json').writeAsStringSync(data);
+    savingInProcess = false;
+  }
+
+  static Future<void> _loadFromFile() async {
+    late Directory dir;
+    if (Platform.isAndroid || Platform.isIOS) {
+      dir = await getApplicationDocumentsDirectory();
+    } else {
+      dir = Directory.current;
+    }
+    try {
+      var data = File(dir.path + '/config.json').readAsStringSync();
+      var map = jsonDecode(data);
+      if (map is! Map) return;
+      for (var entry in map.entries) {
+        if (indexedConfig.containsKey(entry.key)) {
+          indexedConfig[entry.key]!.tryChangeValue!(entry.value);
+          continue;
+        }
+        print("Loaded an unfamiliar entry: ${entry.key}: ${entry.value}");
+      }
+      // ignore: empty_catches
+    } on PathNotFoundException {}
+  }
 
   static void set(String name, dynamic value) {
-    if (value is bool) {
-      _prefs.value.setBool(name, value);
-    } else if (value is int) {
-      _prefs.value.setInt(name, value);
-    } else if (value is double) {
-      _prefs.value.setDouble(name, value);
-    } else if (value is String) {
-      _prefs.value.setString(name, value);
-    } else if (value is List &&
-        value.where((element) => element is! String).isEmpty) {
-      _prefs.value.setStringList(name, value.cast());
+    if (indexedConfig.containsKey(name)) {
+      indexedConfig[name]!.tryChangeValue!(value);
     } else {
+      // Do not allow new entry creation
       assert(false);
+      // var namedValue = NamedValue(name);
+      // namedValue.originSetValue(value);
+      // indexedConfig[name] = namedValue;
+      // bool ret = sortedConfig.add(namedValue);
+      // assert(ret);
     }
-    _prefs.notifyListeners();
+    sortedConfigNotifier.notifyListeners();
+    _saveToFile();
   }
 
-  static Future<void> init(Map<String, dynamic> initial) async {
-    _prefs = ManualValueNotifier(await SharedPreferences.getInstance());
-    var existedKeys = _prefs.value.getKeys();
-    for (var entry in initial.entries) {
-      if (!existedKeys.contains(entry.key)) {
-        if (entry.value is bool) {
-          _prefs.value.setBool(entry.key, entry.value);
-        } else if (entry.value is int) {
-          _prefs.value.setInt(entry.key, entry.value);
-        } else if (entry.value is double) {
-          _prefs.value.setDouble(entry.key, entry.value);
-        } else if (entry.value is String) {
-          _prefs.value.setString(entry.key, entry.value);
-        } else if (entry.value is List &&
-            (entry.value as List)
-                .where((element) => element is! String)
-                .isEmpty) {
-          _prefs.value.setStringList(entry.key, entry.value);
-        } else {
-          assert(false);
-        }
-      }
+  static Future<void> init(Iterable<NamedValue> initial) async {
+    initial = _preprocessInitialValue(initial);
+    indexedConfig.addEntries(initial.map((e) => MapEntry(e.name, e)));
+    sortedConfig.addAll(initial);
+    await _loadFromFile();
+    sortedConfigNotifier.notifyListeners();
+  }
+
+  static List<NamedValue> _preprocessInitialValue(
+      Iterable<NamedValue> initial) {
+    var list = <NamedValue>[];
+    for (var item in initial) {
+      var name = item.name;
+      var fun = item.tryChangeValue;
+      list.add(NamedValue(name, type: item.type, meta: item.meta,
+          tryChangeValue: (value) {
+        fun?.call(value);
+        indexedConfig[name]!.originSetValue(value);
+        _saveToFile();
+      }, value: item.value));
     }
+    return list;
   }
 }

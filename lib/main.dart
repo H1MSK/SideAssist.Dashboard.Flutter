@@ -29,15 +29,32 @@ bool get isDesktop {
 }
 
 void main() async {
-  await GlobalConfig.init({
-    "server.host": "localhost",
-    "server.port": 1883,
-    "server.username": "side_assist_dashboard",
-    "server.password": "16509490",
-    "theme.mode": ThemeMode.system.name,
-    "theme.windowEffects":
-        (Platform.isWindows ? WindowEffect.acrylic : WindowEffect.disabled).name
-  });
+  await GlobalConfig.init([
+    NamedValue("server.host", value: "localhost"),
+    NamedValue("server.port", value: 1883),
+    NamedValue("server.username", value: "side_assist_dashboard"),
+    NamedValue("server.password", value: "16509490"),
+    NamedValue("theme.mode",
+        value: ThemeMode.system.name,
+        type: ValueType.optionType,
+        meta: OptionMetaType(
+            ThemeMode.values.map((e) => e.name).toList(growable: false)),
+        tryChangeValue: (value) => appTheme.mode = ThemeMode.values.firstWhere(
+            (element) => element.name == value,
+            orElse: () => appTheme.mode)),
+    NamedValue(
+      "theme.windowEffects",
+      value: (Platform.isWindows ? WindowEffect.acrylic : WindowEffect.disabled)
+          .name,
+      type: ValueType.optionType,
+      meta: OptionMetaType(currentWindowEffects.isEmpty
+          ? [WindowEffect.disabled.name]
+          : currentWindowEffects.map((e) => e.name).toList(growable: false)),
+      tryChangeValue: (value) => appTheme.windowEffect = WindowEffect.values
+          .firstWhere((element) => element.name == value,
+              orElse: () => appTheme.windowEffect),
+    ),
+  ]);
   dashboard.initialize();
   Pages.initialize();
   var future = dashboard.connect(
