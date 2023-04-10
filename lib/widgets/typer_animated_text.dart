@@ -6,11 +6,17 @@ class TyperAnimatedText extends StatefulWidget {
   final Duration? duration;
   final AnimationController? controller;
   final Curve curve;
+  final TextOverflow? overflow;
+  final int? maxLines;
+  final TextStyle? style;
   const TyperAnimatedText(this.text,
       {this.reverse = false,
       this.duration,
+      this.maxLines,
+      this.style,
       this.curve = Curves.linear,
       this.controller,
+      this.overflow,
       super.key});
 
   @override
@@ -81,6 +87,11 @@ class _TyperAnimatedTextState extends State<TyperAnimatedText>
 
   @override
   Widget build(BuildContext context) {
-    return Text(widget.text.substring(0, (value * widget.text.length).round()));
+    return Text(
+      widget.text.substring(0, (value * widget.text.length).round()),
+      overflow: widget.overflow,
+      style: widget.style,
+      maxLines: widget.maxLines,
+    );
   }
 }
