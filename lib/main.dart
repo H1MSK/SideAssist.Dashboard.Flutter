@@ -307,18 +307,10 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
                   focusNode: searchFocusNode,
                   controller: searchController,
                   unfocusedColor: Colors.transparent,
-                  items: Pages.originalItems.whereType<PaneItem>().map((item) {
-                    assert(item.title is Text);
-                    final text = (item.title as Text).data!;
-                    return AutoSuggestBoxItem(
-                      label: text,
-                      value: text,
-                      onSelected: () {
-                        item.onTap?.call();
-                        searchController.clear();
-                      },
-                    );
-                  }).toList(),
+                  items: _recursivePaneItemToAutoSuggestBoxItem(
+                          (Pages.originalItems + Pages.generatedPaneItems)
+                              .whereType<PaneItem>())
+                      .toList(growable: false),
                   trailingIcon: IgnorePointer(
                     child: IconButton(
                       onPressed: () {},
@@ -334,6 +326,26 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
                 searchFocusNode.requestFocus();
               },
             ));
+  }
+
+  Iterable<AutoSuggestBoxItem<String>> _recursivePaneItemToAutoSuggestBoxItem(
+      Iterable<NavigationPaneItem> items) sync* {
+    for (var item in items) {
+      if (item is! PaneItem) continue;
+      assert(item.title is Text);
+      final text = (item.title as Text).data!;
+      yield AutoSuggestBoxItem(
+        label: text,
+        value: text,
+        onSelected: () {
+          item.onTap?.call();
+          searchController.clear();
+        },
+      );
+      if (item is PaneItemExpander) {
+        yield* _recursivePaneItemToAutoSuggestBoxItem(item.items);
+      }
+    }
   }
 
   @override
