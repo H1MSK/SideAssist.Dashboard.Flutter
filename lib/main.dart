@@ -28,6 +28,8 @@ bool get isDesktop {
   ].contains(defaultTargetPlatform);
 }
 
+final appTheme = AppTheme();
+
 void main() async {
   await GlobalConfig.init([
     NamedValue("server.host", value: "localhost"),
@@ -110,7 +112,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AppTheme(),
+      create: (_) => appTheme,
       builder: (context, _) {
         final appTheme = context.watch<AppTheme>();
         return FluentApp.router(
