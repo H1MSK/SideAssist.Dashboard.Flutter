@@ -12,3 +12,15 @@ class ClientInfoWidget extends StatelessWidget with PageMixin {
     return PageHeader(title: Text(client.name));
   }
 }
+
+class ClientFastInfoWidget extends StatelessWidget {
+  final Client client;
+  const ClientFastInfoWidget(this.client, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Text((client.category + [client.name]).join('.')),
+    );
+  }
+}
