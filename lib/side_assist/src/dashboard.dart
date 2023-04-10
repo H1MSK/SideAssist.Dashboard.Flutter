@@ -148,14 +148,14 @@ class Dashboard {
   }
 
   void changeOption(Client client, String optionName, dynamic value) {
-    mqttClient.publishMessage(
-        "side_assist/${client.name}/option/$optionName/set",
-        MqttQos.atLeastOnce,
-        MqttClientPayloadBuilder()
-            .addString(
-                client.indexedOptions[optionName]?.type != ValueType.unknownType
-                    ? jsonEncode({"value": value})
-                    : '{"value":$value}')
-            .payload!);
+    final sendString =
+        client.indexedOptions[optionName]?.type != ValueType.unknownType
+            ? jsonEncode({"value": value})
+            : '{"value":$value}';
+    final topic =
+        "side_assist/${(client.category.isNotEmpty ? client.category.join('.') + '.' : '') + client.name}/option/$optionName/set";
+    print("Send to topic $topic: $sendString");
+    mqttClient.publishMessage(topic, MqttQos.atLeastOnce,
+        MqttClientPayloadBuilder().addString(sendString).payload!);
   }
 }
