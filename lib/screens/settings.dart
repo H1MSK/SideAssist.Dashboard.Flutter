@@ -1,9 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
 import 'package:dashboard/config.dart';
-import 'package:dashboard/manual_value_notifer.dart';
-import 'package:dashboard/side_assist/side_assist.dart';
-import 'package:dashboard/widgets/option.dart';
 import 'package:dashboard/widgets/option_list.dart';
 import 'package:flutter/foundation.dart';
 
@@ -80,7 +77,7 @@ List<WindowEffect> get currentWindowEffects {
   return [];
 }
 
-class Settings extends ScrollablePage with OptionWidgetMixin, PageMixin {
+class Settings extends ScrollablePage with PageMixin {
   Settings({super.key});
 
   @override
@@ -91,20 +88,10 @@ class Settings extends ScrollablePage with OptionWidgetMixin, PageMixin {
   @override
   List<Widget> buildScrollable(BuildContext context) {
     assert(debugCheckHasMediaQuery(context));
-    var globalConfigMap = ManualValueNotifier(<NamedValue>[]);
-    globalConfigMap.value
-        .addAll(GlobalConfig.keys.map((e) => NamedValue.fromLocalValue(
-              e,
-              GlobalConfig.get(e),
-              tryChangeValue: (value) {
-                GlobalConfig.set(e, value);
-              },
-            )));
-
     return [
       Text('Server', style: FluentTheme.of(context).typography.subtitle),
       spacer,
-      ClientOptionsWidget(globalConfigMap)
+      ClientOptionsWidget(GlobalConfig.sortedConfigNotifier)
     ];
   }
 }
