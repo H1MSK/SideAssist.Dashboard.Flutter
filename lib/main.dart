@@ -199,28 +199,7 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
     super.dispose();
   }
 
-  int _calculateSelectedIndex(BuildContext context) {
-    final location = Pages.router.location;
-    int indexOriginal = Pages.originalItems
-        .indexWhere((element) => element.key == Key(location));
-
-    if (indexOriginal != -1) return indexOriginal;
-
-    int indexGenerated = Pages.generatedPaneItems
-        .indexWhere((element) => element.key == Key(location));
-    if (indexGenerated != -1) {
-      return Pages.originalItems.length + indexGenerated;
-    }
-    int indexFooter = Pages.footerItems
-        .where((element) => element.key != null)
-        .toList()
-        .indexWhere((element) => element.key == Key(location));
-    return indexFooter == -1
-        ? 0
-        : Pages.originalItems.length +
-            Pages.generatedPaneItems.length +
-            indexFooter;
-  }
+  int topIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -323,7 +302,8 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
                 );
               },
               pane: NavigationPane(
-                selected: _calculateSelectedIndex(context),
+                onChanged: (value) => topIndex = value,
+                selected: topIndex,
                 displayMode: appTheme.displayMode,
                 indicator: () {
                   switch (appTheme.indicator) {
