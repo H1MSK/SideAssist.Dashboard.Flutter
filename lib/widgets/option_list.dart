@@ -14,8 +14,9 @@ class ClientOptionsWidget extends StatelessWidget with PageMixin {
     return ValueListenableBuilder(
       valueListenable: options,
       builder: (context, Iterable<NamedValue> options, child) => Column(
-        children:
-            options.map((e) => ClientOptionWidget(e)).toList(growable: false),
+        children: [
+          for (var o in options) ...[ClientOptionWidget(o), spacer]
+        ],
       ),
     );
   }
