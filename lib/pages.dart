@@ -1,8 +1,10 @@
 import 'package:dashboard/main.dart';
 import 'package:dashboard/manual_value_notifer.dart';
+import 'package:dashboard/screens/category.dart';
 import 'package:dashboard/screens/home.dart';
 import 'package:dashboard/side_assist/side_assist.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import 'screens/client.dart';
@@ -83,45 +85,48 @@ class Pages {
 
   static void _regeneratePaneItemsAndRoutes() {
     generatedPaneItems.clear();
-    var expanderList = <PaneItemExpander>[];
+    var lastCategory = <String>[];
+    PaneItemExpander? expander;
     for (var client in dashboard.orderedClients) {
-      for (var i = 0; i < client.category.length; ++i) {
-        if (expanderList.length == i ||
-            (expanderList[i].title as Text).data != client.category[i]) {
-          var newExpander = PaneItemExpander(
-              icon: const Icon(FluentIcons.all_apps),
-              title: Text(client.category[i]),
-              items: [],
-              body: const SizedBox.shrink(),
-              onTap: null);
-          if (i == 0) {
-            generatedPaneItems.add(newExpander);
-          } else {
-            expanderList[i - 1].items.add(newExpander);
-          }
-          expanderList.removeRange(i, expanderList.length);
-          expanderList.add(newExpander);
+      if (!listEquals(lastCategory, client.category)) {
+        lastCategory = client.category;
+        if (client.category.isEmpty) {
+          expander = null;
+        } else {
+          var routePath = '/category/' + client.category.join('/');
+          expander = PaneItemExpander(
+            key: Key(routePath),
+            icon: const Icon(FluentIcons.all_apps),
+            title: Text(client.category.join('.')),
+            items: [],
+            body: const SizedBox.shrink(),
+            onTap: () {
+              if (router.location != routePath) {
+                router.push(routePath);
+              }
+            },
+          );
+          generatedPaneItems.add(expander);
+          generatedRoutes.add(GoRoute(
+              path: routePath,
+              builder: (context, state) => CategoryPage(client.category)));
         }
-      }
-      if (expanderList.length > client.category.length) {
-        expanderList.removeRange(client.category.length, expanderList.length);
       }
 
       var routePath = '/' + client.name;
       if (client.category.isNotEmpty) {
         routePath = '/' + client.category.join('/') + routePath;
       }
-      (expanderList.isEmpty ? generatedPaneItems : expanderList[-1].items)
-          .add(PaneItem(
-              key: Key(routePath),
-              icon: const Icon(FluentIcons.app_icon_default),
-              title: Text(client.name),
-              body: const SizedBox.shrink(),
-              onTap: () {
-                if (router.location != routePath) {
-                  router.push(routePath);
-                }
-              }));
+      (expander?.items ?? generatedPaneItems).add(PaneItem(
+          key: Key(routePath),
+          icon: const Icon(FluentIcons.app_icon_default),
+          title: Text(client.name),
+          body: const SizedBox.shrink(),
+          onTap: () {
+            if (router.location != routePath) {
+              router.push(routePath);
+            }
+          }));
       generatedRoutes.add(GoRoute(
           path: routePath, builder: (context, state) => ClientPage(client)));
     }
@@ -133,5 +138,5 @@ class Pages {
   static List<NavigationPaneItem> get generatedPaneItems =>
       generatedPaneItemsNotifier.value;
 
-  static List<RouteBase> generatedRoutes = [];
+  static final generatedRoutes = <RouteBase>[];
 }
